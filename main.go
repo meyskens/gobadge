@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 	"machine"
 	"time"
@@ -22,13 +23,18 @@ var accel lis3dh.Device
 var snakeGame Game
 
 func main() {
+	time.Sleep(5 * time.Second)
+	fmt.Println("Hello tiny world")
+
 	machine.SPI1.Configure(machine.SPIConfig{
 		SCK:       machine.SPI1_SCK_PIN,
-		SDO:       machine.SPI0_SDO_PIN,
-		SDI:       machine.SPI0_SDI_PIN,
+		SDO:       machine.SPI1_SDO_PIN,
+		SDI:       machine.SPI1_SDI_PIN,
 		Frequency: 8000000,
 	})
 	machine.I2C0.Configure(machine.I2CConfig{SCL: machine.SCL_PIN, SDA: machine.SDA_PIN})
+
+	fmt.Println("SPI + I2C OK")
 
 	accel = lis3dh.New(machine.I2C0)
 	accel.Address = lis3dh.Address0
@@ -36,16 +42,24 @@ func main() {
 	println(accel.Connected())
 
 	display = st7735.New(machine.SPI1, machine.TFT_RST, machine.TFT_DC, machine.TFT_CS, machine.TFT_LITE)
-	display.Configure(st7735.Config{
-		Rotation: st7735.ROTATION_90,
-	})
+	display.Configure(st7735.Config{})
 
-	buttons = shifter.New(shifter.EIGHT_BITS, machine.BUTTON_LATCH, machine.BUTTON_CLK, machine.BUTTON_OUT)
+	red := color.RGBA{255, 0, 0, 255}
+
+	display.FillScreen(red)
+
+	fmt.Println("Display OK")
+
+	buttons := shifter.NewButtons()
 	buttons.Configure()
+
+	fmt.Println("buttons OK")
 
 	neo := machine.NEOPIXELS
 	neo.Configure(machine.PinConfig{Mode: machine.PinOutput})
 	leds = ws2812.New(neo)
+
+	fmt.Println("LEDs OK")
 
 	snakeGame = Game{
 		colors: []color.RGBA{
@@ -67,6 +81,8 @@ func main() {
 		appleY: -1,
 		status: START,
 	}
+
+	fmt.Println("Snake OK")
 
 	for {
 		switch menu() {
